@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MFL Squad Room — Player Database</title>
+<style>
+  :root{
+    --pitch-900:#0c1712;
+    --pitch-800:#122019;
+    --pitch-700:#17281f;
+    --line:#28382f;
+    --line-soft:#1d2b23;
+    --chalk:#eef2ea;
+    --chalk-dim:#9fb0a4;
+    --grass:#5fd28a;
+    --grass-dim:#3a7a55;
+    --amber:#e0b04a;
+    --font-body: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-num: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top: env(safe-area-inset-top, 0px);}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--pitch-900);
+    color:var(--chalk);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+  body{font-family:'Inter', var(--font-body);}
+  .num{font-family:var(--font-num);}
+
+  header{
+    padding:28px clamp(16px,4vw,40px) 20px;
+    padding-top: calc(28px + env(safe-area-inset-top, 0px));
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:baseline; gap:12px;}
+  .brand .mark{
+    width:10px;height:10px;border-radius:2px;background:var(--grass);
+    box-shadow:0 0 0 3px rgba(95,210,138,0.15);
+    display:inline-block;
+    transform:translateY(-1px);
+  }
+  h1{font-size:22px; font-weight:700; margin:0; letter-spacing:-0.01em;}
+  header p{margin:4px 0 0; color:var(--chalk-dim); font-size:13.5px; max-width:520px;}
+  .source-tag{font-size:12px; color:var(--chalk-dim); text-align:right; line-height:1.5;}
+  .source-tag a{color:var(--grass); text-decoration:none; border-bottom:1px dotted var(--grass-dim);}
+
+  .layout{
+    display:grid;
+    grid-template-columns: 280px 1fr;
+    gap:0;
+    min-height:calc(100% - 90px);
+  }
+  @media (max-width: 860px){
+    .layout{grid-template-columns:1fr;}
+    aside{border-right:none; border-bottom:1px solid var(--line);}
+  }
+
+  aside{
+    border-right:1px solid var(--line);
+    padding:22px clamp(16px,4vw,28px) 40px;
+    background:var(--pitch-800);
+  }
+  .field-group{margin-bottom:18px;}
+  .field-group label{
+    display:block;
+    font-size:11.5px;
+    color:var(--chalk-dim);
+    margin-bottom:6px;
+    letter-spacing:0.01em;
+  }
+  input[type="text"], input[type="number"], select{
+    width:100%;
+    background:var(--pitch-900);
+    border:1px solid var(--line);
+    color:var(--chalk);
+    padding:9px 10px;
+    border-radius:6px;
+    font-size:13.5px;
+    font-family:inherit;
+  }
+  input:focus, select:focus, button:focus-visible{
+    outline:2px solid var(--grass);
+    outline-offset:1px;
+    border-color:var(--grass-dim);
+  }
+  .range-row{display:flex; gap:8px;}
+  .range-row input{width:50%;}
+  .toggle-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 0;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .toggle-row:last-child{border-bottom:none;}
+  .toggle-row span{font-size:13px;}
+  .switch{
+    position:relative; width:36px; height:20px; flex-shrink:0;
+  }
+  .switch input{position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer;}
+  .switch .track{
+    position:absolute; inset:0; background:var(--line); border-radius:20px; transition:background .15s;
+  }
+  .switch .thumb{
+    position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%;
+    background:var(--chalk-dim); transition:transform .15s, background .15s;
+  }
+  .switch input:checked + .track{background:var(--grass-dim);}
+  .switch input:checked + .track + .thumb{transform:translateX(16px); background:var(--grass);}
+
+  fieldset{border:none; padding:0; margin:0 0 18px;}
+  legend{
+    font-size:12px; text-transform:none; color:var(--chalk-dim);
+    margin-bottom:8px; padding:0;
+  }
+  .pos-grid{display:flex; flex-wrap:wrap; gap:6px;}
+  .pos-chip{
+    font-size:12px; padding:5px 9px; border:1px solid var(--line); border-radius:20px;
+    background:var(--pitch-900); color:var(--chalk-dim); cursor:pointer; user-select:none;
+  }
+  .pos-chip.active{background:rgba(95,210,138,0.14); color:var(--grass); border-color:var(--grass-dim);}
+
+  .btn{
+    width:100%; padding:11px; border-radius:7px; border:1px solid var(--grass-dim);
+    background:var(--grass); color:#08130d; font-weight:600; font-size:13.5px; cursor:pointer;
+    margin-top:4px;
+  }
+  .btn:hover{background:#72dc98;}
+  .btn.secondary{
+    background:transparent; color:var(--chalk-dim); border:1px solid var(--line); font-weight:500;
+    margin-top:8px;
+  }
+  .btn.secondary:hover{color:var(--chalk); border-color:var(--chalk-dim);}
+  .btn.small{width:auto; padding:7px 12px; font-size:12.5px; margin-top:0;}
+
+  main{padding:22px clamp(16px,4vw,32px) 60px; overflow-x:hidden;}
+  .status-bar{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .status-bar .count{font-size:13px; color:var(--chalk-dim);}
+  .status-bar .count strong{color:var(--chalk); font-family:var(--font-num);}
+  .search-box{
+    flex:1; min-width:200px; max-width:340px; position:relative;
+  }
+  .search-box input{padding-left:32px;}
+  .search-box .icon{
+    position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--chalk-dim); font-size:13px;
+  }
+
+  .banner{
+    border:1px solid var(--amber); background:rgba(224,176,74,0.08); color:#f0d199;
+    border-radius:8px; padding:12px 14px; font-size:13px; margin-bottom:16px; line-height:1.5;
+  }
+  .banner strong{color:var(--amber);}
+  .banner button{
+    background:none; border:1px solid rgba(224,176,74,0.5); color:#f0d199; border-radius:5px;
+    padding:5px 10px; font-size:12px; margin-top:8px; cursor:pointer;
+  }
+
+  .table-wrap{
+    border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--pitch-800);
+  }
+  .table-scroll{overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; min-width:820px;}
+  thead th{
+    text-align:left; font-size:11.5px; color:var(--chalk-dim); font-weight:600;
+    padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap;
+    cursor:pointer; position:sticky; top:0; background:var(--pitch-800);
+  }
+  thead th:hover{color:var(--chalk);}
+  thead th .arrow{opacity:0.5; font-size:10px; margin-left:3px;}
+  tbody td{
+    padding:10px 12px; font-size:13.5px; border-bottom:1px solid var(--line-soft); white-space:nowrap;
+  }
+  tbody tr:hover{background:rgba(255,255,255,0.02);}
+  tbody tr:last-child td{border-bottom:none;}
+  .name-cell{display:flex; flex-direction:column;}
+  .name-cell .full{font-weight:600;}
+  .name-cell .sub{font-size:11.5px; color:var(--chalk-dim);}
+  .pos-tag{
+    display:inline-block; font-size:11px; padding:2px 6px; border-radius:4px; margin-right:3px;
+    background:rgba(95,210,138,0.1); color:var(--grass); font-family:var(--font-num);
+  }
+  .ovr{
+    font-family:var(--font-num); font-weight:600; font-size:14px;
+    padding:2px 8px; border-radius:5px; display:inline-block;
+  }
+  .ovr.tier-1{background:rgba(95,210,138,0.16); color:var(--grass);}
+  .ovr.tier-2{background:rgba(224,176,74,0.14); color:var(--amber);}
+  .ovr.tier-3{background:rgba(159,176,164,0.12); color:var(--chalk-dim);}
+  .fa-tag{font-size:11px; color:var(--grass); font-family:var(--font-num);}
+
+  .empty-state{
+    padding:60px 20px; text-align:center; color:var(--chalk-dim);
+  }
+  .empty-state .glyph{font-size:28px; margin-bottom:10px; opacity:0.6;}
+  .empty-state h3{color:var(--chalk); font-size:15px; margin:0 0 6px;}
+  .empty-state p{font-size:13px; max-width:380px; margin:0 auto;}
+
+  .pager{
+    display:flex; justify-content:center; align-items:center; gap:10px; margin-top:16px;
+    font-size:13px; color:var(--chalk-dim);
+  }
+  .pager button{
+    background:var(--pitch-800); border:1px solid var(--line); color:var(--chalk);
+    padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px;
+  }
+  .pager button:disabled{opacity:0.35; cursor:default;}
+  .pager button:not(:disabled):hover{border-color:var(--grass-dim);}
+
+  .raw-params{width:100%; min-height:64px; resize:vertical; font-family:var(--font-num); font-size:12px;}
+
+  ::-webkit-scrollbar{height:8px; width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="brand"><span class="mark"></span><h1>Squad Room</h1></div>
+    <p>A filterable player database pulled live from the PlayMFL API — search the pool by role, age, rating and ownership status.</p>
+  </div>
+  <div class="source-tag">
+    Queries <span class="num">api.playmfl.com/players</span><br>
+    Built from a reverse-engineered API reference — unofficial, read-only.
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="field-group">
+      <label for="apiBaseInput">API endpoint</label>
+      <input type="text" id="apiBaseInput" value="https://api.playmfl.com">
+      <p style="font-size:11px; color:var(--chalk-dim); margin:6px 0 0;">Using the Vercel proxy? Set this to <span class="num">https://your-project.vercel.app/api</span> (note the <span class="num">/api</span>).</p>
+    </div>
+
+    <div class="field-group">
+      <label for="walletInput">Owner wallet address</label>
+      <input type="text" id="walletInput" placeholder="0x… (optional)">
+    </div>
+
+    <div class="toggle-row">
+      <span>Free agents only</span>
+      <label class="switch"><input type="checkbox" id="freeAgentToggle"><span class="track"></span><span class="thumb"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span>Exclude MFL-owned</span>
+      <label class="switch"><input type="checkbox" id="excludeMflToggle"><span class="track"></span><span class="thumb"></span></label>
+    </div>
+
+    <fieldset style="margin-top:18px;">
+      <legend>Position</legend>
+      <div class="pos-grid" id="posGrid">
+        <span class="pos-chip" data-pos="GK">GK</span>
+        <span class="pos-chip" data-pos="CB">CB</span>
+        <span class="pos-chip" data-pos="LB">LB</span>
+        <span class="pos-chip" data-pos="RB">RB</span>
+        <span class="pos-chip" data-pos="CDM">CDM</span>
+        <span class="pos-chip" data-pos="CM">CM</span>
+        <span class="pos-chip" data-pos="CAM">CAM</span>
+        <span class="pos-chip" data-pos="LM">LM</span>
+        <span class="pos-chip" data-pos="RM">RM</span>
+        <span class="pos-chip" data-pos="LW">LW</span>
+        <span class="pos-chip" data-pos="RW">RW</span>
+        <span class="pos-chip" data-pos="ST">ST</span>
+      </div>
+    </fieldset>
+
+    <div class="field-group">
+      <label>Overall rating</label>
+      <div class="range-row">
+        <input type="number" id="ovrMin" placeholder="Min" min="0" max="99">
+        <input type="number" id="ovrMax" placeholder="Max" min="0" max="99">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>Age</label>
+      <div class="range-row">
+        <input type="number" id="ageMin" placeholder="Min" min="14" max="45">
+        <input type="number" id="ageMax" placeholder="Max" min="14" max="45">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label for="nationalityInput">Nationality contains</label>
+      <input type="text" id="nationalityInput" placeholder="e.g. BRAZIL">
+    </div>
+
+    <div class="field-group">
+      <label for="fetchLimit">Players to fetch</label>
+      <select id="fetchLimit">
+        <option value="25">25</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+        <option value="250">250</option>
+      </select>
+    </div>
+
+    <details style="margin-bottom:14px;">
+      <summary style="font-size:11.5px; color:var(--chalk-dim); cursor:pointer;">Advanced: raw query params</summary>
+      <p style="font-size:11.5px; color:var(--chalk-dim); margin:8px 0;">Some /players filters (offerStatuses, offerDivisionAccepted, ownerLastActivity) have an unconfirmed exact format. Add raw <span class="num">key=value</span> pairs here, one per line, to experiment.</p>
+      <textarea class="raw-params" id="rawParams" placeholder="offerStatuses=RECEIVED"></textarea>
+    </details>
+
+    <button class="btn" id="searchBtn">Search players</button>
+    <button class="btn secondary" id="resetBtn">Reset filters</button>
+    <button class="btn secondary" id="demoBtn">Load sample data</button>
+  </aside>
+
+  <main>
+    <div class="status-bar">
+      <div class="search-box">
+        <span class="icon">⌕</span>
+        <input type="text" id="nameSearch" placeholder="Filter loaded results by name…">
+      </div>
+      <div class="count" id="resultCount"></div>
+    </div>
+
+    <div id="bannerSlot"></div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="playerTable">
+          <thead>
+            <tr>
+              <th data-key="name">Player <span class="arrow"></span></th>
+              <th data-key="positions">Pos <span class="arrow"></span></th>
+              <th data-key="overall">OVR <span class="arrow"></span></th>
+              <th data-key="age">Age <span class="arrow"></span></th>
+              <th data-key="nationalities">Nationality <span class="arrow"></span></th>
+              <th data-key="height">Height <span class="arrow"></span></th>
+              <th data-key="pace">Pace <span class="arrow"></span></th>
+              <th data-key="ownedBy">Owner <span class="arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pager" id="pager"></div>
+  </main>
+</div>
+
+<script>
+(function(){
+  let allPlayers = [];
+  let sortKey = "overall";
+  let sortDir = -1;
+  let page = 1;
+  const PAGE_SIZE = 20;
+  const activePositions = new Set();
+
+  const el = id => document.getElementById(id);
+  const tableBody = el("tableBody");
+  const bannerSlot = el("bannerSlot");
+  const resultCount = el("resultCount");
+  const pager = el("pager");
+
+  document.querySelectorAll(".pos-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const pos = chip.dataset.pos;
+      if (activePositions.has(pos)) { activePositions.delete(pos); chip.classList.remove("active"); }
+      else { activePositions.add(pos); chip.classList.add("active"); }
+      page = 1;
+      render();
+    });
+  });
+
+  el("searchBtn").addEventListener("click", fetchPlayers);
+  el("demoBtn").addEventListener("click", loadDemo);
+  el("resetBtn").addEventListener("click", resetFilters);
+  el("nameSearch").addEventListener("input", () => { page = 1; render(); });
+  el("ovrMin").addEventListener("input", () => { page = 1; render(); });
+  el("ovrMax").addEventListener("input", () => { page = 1; render(); });
+  el("ageMin").addEventListener("input", () => { page = 1; render(); });
+  el("ageMax").addEventListener("input", () => { page = 1; render(); });
+  el("nationalityInput").addEventListener("input", () => { page = 1; render(); });
+
+  document.querySelectorAll("#playerTable thead th").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.key;
+      if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = -1; }
+      document.querySelectorAll("#playerTable thead .arrow").forEach(a => a.textContent = "");
+      th.querySelector(".arrow").textContent = sortDir === -1 ? "▼" : "▲";
+      render();
+    });
+  });
+
+  function resetFilters(){
+    el("walletInput").value = "";
+    el("freeAgentToggle").checked = false;
+    el("excludeMflToggle").checked = false;
+    el("ovrMin").value = ""; el("ovrMax").value = "";
+    el("ageMin").value = ""; el("ageMax").value = "";
+    el("nationalityInput").value = "";
+    el("nameSearch").value = "";
+    el("rawParams").value = "";
+    activePositions.clear();
+    document.querySelectorAll(".pos-chip").forEach(c => c.classList.remove("active"));
+    allPlayers = [];
+    page = 1;
+    bannerSlot.innerHTML = "";
+    render();
+  }
+
+  function normalizePlayer(p){
+    const m = p.metadata || {};
+    return {
+      id: p.id,
+      name: [m.firstName, m.lastName].filter(Boolean).join(" ") || "Unknown",
+      positions: (m.positions || []).join(", "),
+      overall: m.overall ?? null,
+      age: m.age ?? null,
+      nationalities: (m.nationalities || []).join(", "),
+      height: m.height ?? null,
+      pace: m.pace ?? null,
+      ownedBy: p.ownedBy && (p.ownedBy.name || p.ownedBy.walletAddress) || (p.offerStatus === "FREE_AGENT" ? "Free agent" : "—"),
+      isFreeAgent: !p.ownedBy || p.offerStatus === "FREE_AGENT"
+    };
+  }
+
+  async function fetchPlayers(){
+    const params = new URLSearchParams();
+    params.set("limit", el("fetchLimit").value);
+    if (el("freeAgentToggle").checked) params.set("isFreeAgent", "true");
+    if (el("excludeMflToggle").checked) params.set("excludingMflOwned", "true");
+    const wallet = el("walletInput").value.trim();
+    if (wallet) params.set("ownerWalletAddress", wallet);
+
+    el("rawParams").value.split("\n").forEach(line => {
+      const idx = line.indexOf("=");
+      if (idx > 0) {
+        const k = line.slice(0, idx).trim();
+        const v = line.slice(idx + 1).trim();
+        if (k && v) params.set(k, v);
+      }
+    });
+
+    const apiBase = el("apiBaseInput").value.trim().replace(/\/$/, "") || "https://api.playmfl.com";
+    bannerSlot.innerHTML = `<div class="banner">Requesting <span class="num">${apiBase}/players?${params.toString()}</span> …</div>`;
+
+    try {
+      const res = await fetch(`${apiBase}/players?${params.toString()}`, {
+        method: "GET",
+        headers: { "Accept": "application/json" }
+      });
+      if (!res.ok) throw new Error(`API responded with status ${res.status}`);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data.players || data.data || []);
+      allPlayers = list.map(normalizePlayer);
+      bannerSlot.innerHTML = allPlayers.length
+        ? ""
+        : `<div class="banner">The request succeeded but returned no players. Try widening the filters.</div>`;
+      page = 1;
+      render();
+    } catch (err) {
+      allPlayers = [];
+      bannerSlot.innerHTML = `
+        <div class="banner">
+          <strong>Live request blocked.</strong> Your browser refused the cross-origin call to
+          <span class="num">api.playmfl.com</span> (${escapeHtml(err.message)}).
+          This is expected if the API doesn't grant CORS access to pages outside app.playmfl.com,
+          or if this page is running inside a sandboxed preview. Opening this saved .html file
+          directly in your own browser gives it the best chance of reaching the API — but if PlayMFL's
+          server doesn't allow your origin, a live in-browser fetch won't be possible at all, and
+          you'd need a small server-side proxy you control instead.
+          <div><button onclick="document.getElementById('demoBtn').click()">Load sample data instead</button></div>
+        </div>`;
+      render();
+    }
+  }
+
+  function loadDemo(){
+    bannerSlot.innerHTML = `<div class="banner"><strong>Sample data.</strong> This is fabricated demo data shown for layout and filtering purposes — it is not a live PlayMFL result.</div>`;
+    allPlayers = DEMO_PLAYERS.map(normalizePlayer);
+    page = 1;
+    render();
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function tierClass(ovr){
+    if (ovr == null) return "tier-3";
+    if (ovr >= 85) return "tier-1";
+    if (ovr >= 75) return "tier-2";
+    return "tier-3";
+  }
+
+  function getFiltered(){
+    const nameQ = el("nameSearch").value.trim().toLowerCase();
+    const natQ = el("nationalityInput").value.trim().toLowerCase();
+    const ovrMin = parseInt(el("ovrMin").value, 10);
+    const ovrMax = parseInt(el("ovrMax").value, 10);
+    const ageMin = parseInt(el("ageMin").value, 10);
+    const ageMax = parseInt(el("ageMax").value, 10);
+
+    return allPlayers.filter(p => {
+      if (nameQ && !p.name.toLowerCase().includes(nameQ)) return false;
+      if (natQ && !p.nationalities.toLowerCase().includes(natQ)) return false;
+      if (!Number.isNaN(ovrMin) && (p.overall == null || p.overall < ovrMin)) return false;
+      if (!Number.isNaN(ovrMax) && (p.overall == null || p.overall > ovrMax)) return false;
+      if (!Number.isNaN(ageMin) && (p.age == null || p.age < ageMin)) return false;
+      if (!Number.isNaN(ageMax) && (p.age == null || p.age > ageMax)) return false;
+      if (activePositions.size && !Array.from(activePositions).some(pos => p.positions.includes(pos))) return false;
+      return true;
+    });
+  }
+
+  function render(){
+    let rows = getFiltered();
+    rows.sort((a, b) => {
+      let av = a[sortKey], bv = b[sortKey];
+      if (av == null) av = sortKey === "name" ? "" : -Infinity;
+      if (bv == null) bv = sortKey === "name" ? "" : -Infinity;
+      if (typeof av === "string") return sortDir * av.localeCompare(bv);
+      return sortDir * (bv - av) * -1;
+    });
+
+    resultCount.innerHTML = allPlayers.length
+      ? `<strong>${rows.length}</strong> of <strong>${allPlayers.length}</strong> loaded players`
+      : "";
+
+    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    if (page > totalPages) page = totalPages;
+    const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+    if (!allPlayers.length) {
+      tableBody.innerHTML = "";
+      pager.innerHTML = "";
+      showEmpty();
+      return;
+    }
+    hideEmpty();
+
+    if (!pageRows.length) {
+      tableBody.innerHTML = `<tr><td colspan="8" style="padding:40px; text-align:center; color:var(--chalk-dim);">No players match these filters.</td></tr>`;
+      pager.innerHTML = "";
+      return;
+    }
+
+    tableBody.innerHTML = pageRows.map(p => `
+      <tr>
+        <td><div class="name-cell"><span class="full">${escapeHtml(p.name)}</span>${p.isFreeAgent ? '<span class="fa-tag">Free agent</span>' : ""}</div></td>
+        <td>${p.positions.split(", ").filter(Boolean).map(x => `<span class="pos-tag">${escapeHtml(x)}</span>`).join("")}</td>
+        <td><span class="ovr ${tierClass(p.overall)}">${p.overall ?? "—"}</span></td>
+        <td class="num">${p.age ?? "—"}</td>
+        <td>${escapeHtml(p.nationalities) || "—"}</td>
+        <td class="num">${p.height ?? "—"}</td>
+        <td class="num">${p.pace ?? "—"}</td>
+        <td>${escapeHtml(p.ownedBy)}</td>
+      </tr>
+    `).join("");
+
+    pager.innerHTML = `
+      <button id="prevPage" ${page <= 1 ? "disabled" : ""}>← Prev</button>
+      <span>Page ${page} of ${totalPages}</span>
+      <button id="nextPage" ${page >= totalPages ? "disabled" : ""}>Next →</button>
+    `;
+    const prevBtn = document.getElementById("prevPage");
+    const nextBtn = document.getElementById("nextPage");
+    if (prevBtn) prevBtn.addEventListener("click", () => { page--; render(); });
+    if (nextBtn) nextBtn.addEventListener("click", () => { page++; render(); });
+  }
+
+  function showEmpty(){
+    if (document.getElementById("emptyState")) return;
+    const div = document.createElement("div");
+    div.id = "emptyState";
+    div.className = "empty-state";
+    div.innerHTML = `
+      <div class="glyph">⚽</div>
+      <h3>No players loaded yet</h3>
+      <p>Set your filters on the left and hit "Search players" to query the live API, or load sample data to try the table first.</p>
+    `;
+    el("playerTable").closest(".table-wrap").appendChild(div);
+  }
+  function hideEmpty(){
+    const existing = document.getElementById("emptyState");
+    if (existing) existing.remove();
+  }
+
+  const DEMO_PLAYERS = [
+    {id:1, metadata:{firstName:"Rafael", lastName:"Monteiro", overall:87, age:24, nationalities:["BRAZIL"], positions:["ST"], height:181, pace:88}, ownedBy:{name:"CarvalhoFC"}, offerStatus:"OWNED"},
+    {id:2, metadata:{firstName:"Idris", lastName:"Camara", overall:79, age:21, nationalities:["MALI"], positions:["CDM","CM"], height:184, pace:74}, ownedBy:null, offerStatus:"FREE_AGENT"},
+    {id:3, metadata:{firstName:"Jonas", lastName:"Bergström", overall:91, age:28, nationalities:["SWEDEN"], positions:["CB"], height:192, pace:71}, ownedBy:{name:"NordicWall"}, offerStatus:"OWNED"},
+    {id:4, metadata:{firstName:"Marco", lastName:"Delvecchio", overall:73, age:19, nationalities:["ITALY"], positions:["LW","RW"], height:175, pace:90}, ownedBy:null, offerStatus:"FREE_AGENT"},
+    {id:5, metadata:{firstName:"Kenji", lastName:"Tanaka", overall:82, age:23, nationalities:["JAPAN"], positions:["CAM"], height:172, pace:84}, ownedBy:{name:"RisingSunFC"}, offerStatus:"OWNED"},
+    {id:6, metadata:{firstName:"Youssef", lastName:"El-Amin", overall:76, age:30, nationalities:["MOROCCO"], positions:["GK"], height:189, pace:55}, ownedBy:{name:"AtlasKeepers"}, offerStatus:"OWNED"},
+    {id:7, metadata:{firstName:"Diego", lastName:"Fuentes", overall:95, age:26, nationalities:["ARGENTINA"], positions:["ST"], height:178, pace:92}, ownedBy:{name:"PampasElite"}, offerStatus:"OWNED"},
+    {id:8, metadata:{firstName:"Liam", lastName:"O'Sullivan", overall:68, age:18, nationalities:["IRELAND"], positions:["RB"], height:176, pace:79}, ownedBy:null, offerStatus:"FREE_AGENT"},
+    {id:9, metadata:{firstName:"Erik", lastName:"Solberg", overall:84, age:25, nationalities:["NORWAY"], positions:["CM"], height:183, pace:76}, ownedBy:{name:"FjordUnited"}, offerStatus:"OWNED"},
+    {id:10, metadata:{firstName:"Tunde", lastName:"Balogun", overall:88, age:22, nationalities:["NIGERIA"], positions:["LB"], height:180, pace:89}, ownedBy:{name:"LagosRoots"}, offerStatus:"OWNED"}
+  ];
+
+  render();
+})();
+</script>
+</body>
+</html>
