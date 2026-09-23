@@ -2,5 +2,8 @@
   "name": "mfl-proxy-vercel",
   "version": "1.0.0",
   "description": "Vercel serverless CORS proxy for the PlayMFL API, used by the Squad Room player database tool.",
-  "private": true
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  }
 }
